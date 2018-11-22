@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h> // srandom()
 #include <time.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -102,7 +103,8 @@ void cmd_random(irc_session_t *s)
 	fseek(fp, 0, SEEK_SET);
 	//fprintf(stderr, "Number of lines: %u\n", lines);
 	
-	int line = rand() % lines;
+	int line = random() % lines;
+	//int line = rand() % lines;
    	char str[2048];
 
 	int i = 0;
@@ -374,6 +376,8 @@ int main(int argc, char *argv[])
 	}
 
 	fprintf(stderr, "Starting up kaulmate.\n");
+
+	srandom(time(NULL));
 
 	char *cfg_dir = config_dir(NAME);
 	printf("config dir:  %s\n", cfg_dir);
