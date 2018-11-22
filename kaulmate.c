@@ -83,6 +83,11 @@ void cmd_bot(irc_session_t *s)
 void cmd_random(irc_session_t *s)
 {
 	FILE *fp = fopen("random", "r");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "Could not open 'random' file\n");
+		return;
+	}
 	unsigned lines = 0;
 	int ch = 0;
 
