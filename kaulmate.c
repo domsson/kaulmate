@@ -1,8 +1,17 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "libircclient.h"
 #include "libirc_rfcnumeric.h"
+
+#define NAME "kaulmate"
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 1
+
+#ifndef VERSION
+  #define VERSION 0.0
+#endif
 
 #define TOKEN_SIZE 1024
 #define COMMAND_SIZE 32
@@ -16,7 +25,7 @@ struct irc_context
 	const char *host;
 	unsigned    port;
 	const char *chan;
-	const char *user;
+	const char *nick;
 	const char *pass;
 };
 
@@ -64,6 +73,45 @@ int send_msg(irc_session_t *s, const char *msg)
 	return 0;
 }
 
+void cmd_bot(irc_session_t *s)
+{
+	printf("v. %o.%o build %f\n", VERSION_MAJOR, VERSION_MINOR, VERSION);
+
+	send_msg(s, "This is kaulmate by domsson - https://github.com/domsson/kaulmate");
+}
+
+void cmd_random(irc_session_t *s)
+{
+	FILE *fp = fopen("random", "r");
+	unsigned lines = 0;
+	int ch = 0;
+
+	while((ch = fgetc(fp)) != EOF)
+	{
+		if (ch == '\n')
+		{
+			lines++;
+		}
+	}
+
+	fseek(fp, 0, SEEK_SET);
+	//fprintf(stderr, "Number of lines: %u\n", lines);
+	
+	int line = rand() % lines;
+   	char str[2048];
+
+	int i = 0;
+	for (int i = 0; fgets(str, 2048, fp) != NULL; ++i) {
+		if (i == line)
+		{
+			break;
+		}
+	}
+	fclose(fp);
+
+	send_msg(s, str);
+}
+
 void cmd_time(irc_session_t *s)
 {
 	// time_t is not guaranteed to be an int so it isn't
@@ -85,6 +133,11 @@ void cmd_youtube(irc_session_t *s)
 
 void handle_command(irc_session_t *s, const char *cmd)
 {
+	if (strcmp(cmd, "!bot") == 0)
+	{
+		cmd_bot(s);
+		return;
+	}
 	if (strcmp(cmd, "!time") == 0)
 	{
 		cmd_time(s);
@@ -100,6 +153,7 @@ void handle_command(irc_session_t *s, const char *cmd)
 		cmd_youtube(s);
 		return;
 	}
+	cmd_random(s);
 }
 
 /*
@@ -125,7 +179,9 @@ void event_connect(irc_session_t *s, const char *e, const char *o, const char **
 	if (e)  printf("\tevent   = %s\n", e);
 	if (o)  printf("\torigin  = %s\n", o);
 
-	if (irc_cmd_join(s, "#domsson", 0))
+	struct irc_context *ctx = irc_get_ctx(s);
+
+	if (irc_cmd_join(s, ctx->chan, 0))
 	{
 		printf("Could not join channel");
 	}
@@ -190,9 +246,20 @@ void event_channel(irc_session_t *s, const char *e, const char *o, const char **
 
 	if (p[1][0] == '!') // This might be a command!
 	{
-		fprintf(stderr, "Found command, handing it over...\n");
 		handle_command(s, p[1]);
 	}
+}
+
+/*
+ * This is the event that triggers for /me messages
+ */
+void event_ctcp_action(irc_session_t *s, const char *e, const char *o, const char **p, unsigned c)
+{
+	printf("event_ctcp_action\n");
+	if (e)   printf("\tevent   = %s\n", e);
+	if (o)   printf("\torigin  = %s\n", o);
+	if (c>0) printf("\tchannel = %s\n", p[0]);
+	if (c>1) printf("\tmessage = %s\n", p[1]);
 }
 
 /*
@@ -228,21 +295,91 @@ void cleanup(irc_session_t *s)
 }
 
 /*
-void chat_cmd_time(irc_session_t *s)
+ * Returns a pointer to a string that holds the config dir we want to use.
+ * `sub_dir` is the desired subdirectory within the user's condif dir.
+ * This does not check if the dir actually exists. You need to check still.
+ * The string is allocated with malloc() and needs to be freed by the caller.
+ * If memory allocation for the string fails, NULL will be returned.
+ */
+char *config_dir(const char *subdir)
 {
-	time_t t = NULL
+	// Get the user's home dir - this should be set
+	char *home = getenv("HOME");
+	// Get the user's config dir - this might not be set
+	char *cfg_home = getenv("XDF_CONFIG_HOME");
+	// String to hold the complete path to the config dir
+	char *cfg_dir = NULL;
+	// Length of `cfg_dir`
+	size_t cfg_dir_len;
+
+	// In case XDF_CONFIG_HOME was not set, we assume a .config directory
+	if (cfg_home == NULL)
+	{
+		cfg_dir_len = strlen(home) + strlen(".config") + strlen(subdir) + 3;
+		cfg_dir = malloc(cfg_dir_len);
+		snprintf(cfg_dir, cfg_dir_len, "%s/%s/%s", home, ".config", subdir);
+	}
+	// If XDF_CONFIG_HOME is set, we'll use that
+	else
+	{
+		cfg_dir_len = strlen(cfg_home) + strlen(subdir) + 2;
+		cfg_dir = malloc(cfg_dir_len);
+		snprintf(cfg_dir, cfg_dir_len, "%s/%s", cfg_home, subdir);
+	}
+
+	return cfg_dir;
 }
-*/
+
+
+/*
+ * TODO: the comment
+ */
+char *profile_dir(const char *profile, const char *config_dir)
+{
+	size_t dir_len = strlen(config_dir) + strlen(profile) + 2;
+	char *profile_dir = malloc(dir_len);
+	snprintf(profile_dir, dir_len, "%s/%s", config_dir, profile);
+	return profile_dir;
+}
+
+/*
+ * Returns 1 if the given dir exists and is a dir.
+ * Returns 0 if the given dir is not a dir or some error occured.
+ */
+int dir_exists(const char *dir)
+{
+	struct stat s;
+	if (stat(dir, &s) == -1)
+	{
+		return 0;
+	}		
+	if (S_ISDIR(s.st_mode))
+	{
+		return 1;
+	}
+	return 0;
+}
 
 int main(int argc, char *argv[])
 {
 	if (argc != 4)
 	{
-		printf ("Usage: %s <server> <channel> <nick>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <server> <channel> <nick>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
 	fprintf(stderr, "Starting up kaulmate.\n");
+
+	char *cfg_dir = config_dir(NAME);
+	printf("config dir:  %s\n", cfg_dir);
+	if (dir_exists(cfg_dir))
+	{
+		printf("config dir exists!\n");
+	}
+	char *prf_dir = profile_dir("domsson", cfg_dir);
+	printf("profile dir: %s\n", prf_dir);
+	free(cfg_dir);
+	free(prf_dir);
 
 	FILE *fp;
 	char token[TOKEN_SIZE];
@@ -254,10 +391,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	if (fgets(token, TOKEN_SIZE, fp) != NULL) {
-		/* writing content to stdout */
+
 	}
 	fclose(fp);
 
+	//
 	last_msg = 0.0;
 
 	struct irc_context context;
@@ -265,7 +403,7 @@ int main(int argc, char *argv[])
 	context.host = argv[1];
 	context.port = (strchr(argv[1], ':') == 0) ? 6667 : 0;
 	context.chan = argv[2];
-	context.user = argv[3];
+	context.nick = argv[3];
 	context.pass = token;
 
 	// The IRC callbacks structure
@@ -293,7 +431,7 @@ int main(int argc, char *argv[])
 	callbacks.event_numeric =  event_numeric;
 
 	callbacks.event_ctcp_rep =     event_null;
-	callbacks.event_ctcp_action =  event_null;
+	callbacks.event_ctcp_action =  event_ctcp_action;
 	callbacks.event_dcc_chat_req = event_null;
 	callbacks.event_dcc_send_req = event_null;
 
@@ -302,26 +440,28 @@ int main(int argc, char *argv[])
 
 	if (!session)
 	{
-		fprintf(stderr, "That did not work!\n");
+		fprintf(stderr, "Could not initiate IRC session, aborting.\n");
 		return EXIT_FAILURE;
 	}
 
+	// Have libirc turn complex nick strings into nicks
 	irc_option_set(session, LIBIRC_OPTION_STRIPNICKS);
 
+	// Save the context info into the session for easy retrieval later
 	irc_set_ctx(session, &context);
 
 	// Initiate the IRC server connection
-	if (irc_connect(session, context.host, context.port, context.pass, context.user, context.user, context.user))
+	if (irc_connect(session, context.host, context.port, context.pass, context.nick, context.nick, context.nick))
 	{
-		printf("Could not connect: %s\n", irc_strerror(irc_errno(session)));
+		fprintf(stderr, "Could not connect: %s\n", irc_strerror(irc_errno(session)));
 		cleanup(session);
 		return EXIT_FAILURE;
 	}
-	//
-	// and run into forever loop, generating events
+	
+	// Run endless loop that will fire events as they occur
 	if (irc_run(session))
 	{
-		printf("Could not connect or I/O error: %s\n", irc_strerror (irc_errno(session)));
+		fprintf(stderr, "Could not connect or I/O error: %s\n", irc_strerror(irc_errno(session)));
 		cleanup(session);
 		return EXIT_FAILURE;
 	}
