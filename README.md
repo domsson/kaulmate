@@ -1,10 +1,10 @@
 # kaulmate
 
-A **very** simple IRC bot written in C. It is supposed to be used with Twitch, though I assume it would work on any IRC server, really. This is mainly a fun project to practice my C skills. If you're looking for something to use, you should probably check out PhantomBot.
+A **very** simple IRC bot written in C. Currently developed on an for Linux. It is supposed to be used with Twitch, though I assume it would work on any IRC server, really. This is mainly a fun project to practice my C skills. I don't plan to add many features.
 
 ## Features
 
-Currently, all the bot has to offer are some hard-coded commands (for example `!time`). I say hardcoded, because they all have some information (timezone, for example) in the source code that you probably would want to change.
+Currently, all the bot has to offer are some hard-coded commands (for example `!time`). This means that if you wanted to change the output of those commands (and you most certainly do), then you'd have to dig into the source code.
 
 ## Dependencies
 
@@ -18,6 +18,6 @@ Currently, all the bot has to offer are some hard-coded commands (for example `!
 ## Run
 
 - Create a file called `token`
-- Paste your bot OAuth token into the file
+- Paste [your bot OAuth token](https://twitchapps.com/tmi/) into the file
 - `./kaulmate irc.chat.twitch.tv "#channel" botname`
  
