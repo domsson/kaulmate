@@ -46,6 +46,6 @@ Start up kaulmate, specifying the profile you want to use:
 
 - `bin/kaulmate default`
 
-## Licence
+## License
 
 kaulmate is free software, dedicated to the public domain. Do with it whatever you want, but don't hold me responsible for anything either.
