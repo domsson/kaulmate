@@ -17,7 +17,7 @@ Currently, all the bot has to offer are some hard-coded commands (for example `!
 
 ## Set up
 
-You can create multiple profile for the bot, each with its own settings and login credentials. The name of a profile could be your Twitch name, but for the remainder of this guide, we will assume that we're going to create a profile called `default`. You can create as many profiles as you want.
+You can create multiple profiles for the bot, each with its own settings and login credentials. You are free to name the profiles whatever you want, but for the remainder of this guide, we will assume that we're going to create a profile called `default`.
 
 - In your config directory (usually `~/.config`), create a `kaulmate` directory
 - In the newly created `kaulmate` directory, create a `default` directory
@@ -42,4 +42,7 @@ This file holds the required fields `nick` (Twich user name) and `pass` ([OAuth2
 Start up kaulmate, specifying the profile you want to use:
 
 - `bin/kaulmate default`
- 
+
+## Licence
+
+kaulmate is free software, dedicated to the public domain. Do with it whatever you want, but don't hold me responsible for anything either.
