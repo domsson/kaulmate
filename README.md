@@ -17,6 +17,7 @@ The build script assumed that you have `gcc` installed. If you want to use a dif
 
 - `chmod +x ./build`
 - `./build`
+- `chmod +x bin/kaulmate`
 
 ## Set up
 
