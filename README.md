@@ -8,9 +8,12 @@ Currently, all the bot has to offer are some hard-coded commands (for example `!
 
 ## Dependencies
 
-- `libircclient` (available in the Debian packages as `libircclient1`, `libircclient-dev`)
+- [`libircclient`](https://github.com/shaoner/libircclient) (available in the Debian packages as `libircclient-dev`)
+- [`inih`](https://github.com/benhoyt/inih) (available in the Debian packages as `libinih-dev`)
 
 ## Build
+
+The build script assumed that you have `gcc` installed. If you want to use a different compiler, please edit the build script accordingly.
 
 - `chmod +x ./build`
 - `./build`
