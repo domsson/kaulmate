@@ -8,16 +8,38 @@ Currently, all the bot has to offer are some hard-coded commands (for example `!
 
 ## Dependencies
 
-- `libircclient` (available in the Debian packages as `libircclient1`)
+- `libircclient` (available in the Debian packages as `libircclient1`, `libircclient-dev`)
 
 ## Build
 
 - `chmod +x ./build`
 - `./build`
 
+## Set up
+
+You can create multiple profile for the bot, each with its own settings and login credentials. The name of a profile could be your Twitch name, but for the remainder of this guide, we will assume that we're going to create a profile called `default`. You can create as many profiles as you want.
+
+- In your config directory (usually `~/.config`), create a `kaulmate` directory
+- In the newly created `kaulmate` directory, create a `default` directory
+- In the `default` directory, create two files, `config.ini` and `login.ini`
+
+### `config.ini`
+
+This file holds the general configuration. The two required fields are `host` and `chan`. Example:
+
+    host = irc.chat.twitch.tv
+    chan = #domsson
+
+### `login.ini`
+
+This file holds the required fields `nick` (Twich user name) and `pass` ([OAuth2 token](https://twitchapps.com/tmi/)) for your bot. Example:
+
+    nick = kaulmate
+    pass = oauth:123456789abcdefghi
+
 ## Run
 
-- Create a file called `token`
-- Paste [your bot OAuth token](https://twitchapps.com/tmi/) into the file
-- `./kaulmate irc.chat.twitch.tv "#channel" botname`
+Start up kaulmate, specifying the profile you want to use:
+
+- `bin/kaulmate default`
  
