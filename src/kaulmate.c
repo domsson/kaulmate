@@ -41,11 +41,11 @@ struct irc_context
 
 struct kaul_config
 {
-	char	*host;
-	unsigned port;
-	char	*chan;
-	char	*nick;
-	char	*pass;
+	char *host;
+	unsigned short port;
+	char *chan;
+	char *nick;
+	char *pass;
 
 	char cmdchr;
 	int timezone;
