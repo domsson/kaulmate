@@ -49,4 +49,4 @@ Start up kaulmate, specifying the profile you want to use:
 
 ## License
 
-kaulmate is free software, dedicated to the public domain. Do with it whatever you want, but don't hold me responsible for anything either.
+kaulmate is free software, dedicated to the public domain. Do with it whatever you want, but don't hold me responsible for anything either. However, be aware that the libaries this project is using (see section _Dependencies_) might use a different license. If so, distribution of the executable binary of this project would be affected by such licenses. For that reason, I do not provide a binary, only the source code.
