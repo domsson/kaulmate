@@ -1,6 +1,6 @@
+#include "strutils.h"
 #include <stdlib.h>	// NULL, malloc()
 #include <string.h>	// strlen(), strcmp()
-#include "strutils.h"
 
 /*
  * Returns 1 if both input strings are equal, otherwise 0.

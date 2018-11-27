@@ -1,10 +1,10 @@
+#include "dirutils.h"
 #include <stdio.h>	// snprintf(), size_t
 #include <stdlib.h>	// getenv()
 #include <string.h>	// strlen()
 #include <errno.h>	// errno
 #include <sys/stat.h>	// stat(), mkdir()
 #include <sys/types.h>	// mode_t
-#include "dirutils.h"
 
 /*
  * Writes the user's config path in the buffer supplied with `dir`.
