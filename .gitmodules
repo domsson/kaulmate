@@ -1,0 +1,3 @@
+[submodule "src/libtwirc"]
+	path = src/libtwirc
+	url = https://github.com/domsson/twirc.git
