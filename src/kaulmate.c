@@ -86,7 +86,6 @@ int can_send()
 	return (get_time() - last_msg) >= MSG_INTERVAL;
 }
 
-//int send_msg(irc_session_t *s, const char *msg)
 int send_msg(struct twirc_state *s, const char *msg)
 {
 	double now = get_time();
@@ -103,7 +102,6 @@ int send_msg(struct twirc_state *s, const char *msg)
 	return 0;
 }
 
-//void cmd_bot(irc_session_t *s)
 void cmd_bot(struct twirc_state *s)
 {
 	char msg[1024];
@@ -116,7 +114,6 @@ void cmd_bot(struct twirc_state *s)
 	send_msg(s, msg);
 }
 
-//void cmd_random(irc_session_t *s)
 void cmd_random(struct twirc_state *s)
 {
 	FILE *fp = fopen("random", "r");
@@ -141,8 +138,8 @@ void cmd_random(struct twirc_state *s)
 	int line = random() % lines;
    	char str[2048];
 
-	int i = 0;
-	for (int i = 0; fgets(str, 2048, fp) != NULL; ++i) {
+	for (int i = 0; fgets(str, 2048, fp) != NULL; ++i)
+	{
 		if (i == line)
 		{
 			break;
@@ -261,6 +258,7 @@ void cleanup(irc_session_t *s)
 		return;
 	}
 
+	/*
 	struct kaul_config *cfg = irc_get_ctx(s);
 	free_cfg(cfg);
 
@@ -273,6 +271,7 @@ void cleanup(irc_session_t *s)
 	{
 		irc_destroy_session(s);
 	}
+	*/
 }
 
 int cfg_handler(void *config, const char *section, const char *name, const char *value)

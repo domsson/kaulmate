@@ -1,1 +1,1 @@
-gcc src/strutils.c src/dirutils.c src/libtwirc/src/libtwirc.c src/libtwirc/src/tcpsnob/tcpsnob.c src/kaulmate.c -o bin/kaulmate -lircclient -linih -DBUILD=$(date +"%g%m%d.%H%M%S")
+gcc -g -Wall src/strutils.c src/dirutils.c src/libtwirc/src/libtwirc.c src/libtwirc/src/tcpsnob/tcpsnob.c src/kaulmate.c -o bin/kaulmate -linih -DBUILD=$(date +"%g%m%d.%H%M%S")
