@@ -201,7 +201,7 @@ void handle_command(struct twirc_state *s, const char *cmd)
 	cmd_random(s);
 }
 
-void event_welcome(struct twirc_state *s, const struct twirc_event *evt)
+void event_welcome(struct twirc_state *s, struct twirc_event *evt)
 {
 	twirc_cmd_join(s, "#domsson");
 }
@@ -209,7 +209,7 @@ void event_welcome(struct twirc_state *s, const struct twirc_event *evt)
 /*
  * Someone joined the channel - it could be us!
  */
-void event_join(struct twirc_state *s, const struct twirc_event *evt)
+void event_join(struct twirc_state *s, struct twirc_event *evt)
 {
 	if (strcmp(evt->nick, "kaulmate") == 0)
 	{
@@ -225,7 +225,7 @@ void event_join(struct twirc_state *s, const struct twirc_event *evt)
 /*
  * Someone left the channel - it could be us!
  */
-void event_part(struct twirc_state *s, const struct twirc_event *evt)
+void event_part(struct twirc_state *s, struct twirc_event *evt)
 {
 	if (strcmp(evt->nick, "kaulmate") == 0)
 	{
@@ -233,7 +233,7 @@ void event_part(struct twirc_state *s, const struct twirc_event *evt)
 	}
 }
 
-void event_privmsg(struct twirc_state *s, const struct twirc_event *evt)
+void event_privmsg(struct twirc_state *s, struct twirc_event *evt)
 {
 	fprintf(stdout, "%s: %s\n", evt->nick, evt->message);
 
@@ -246,7 +246,7 @@ void event_privmsg(struct twirc_state *s, const struct twirc_event *evt)
 /*
  * This is the event that triggers for /me messages
  */
-void event_action(struct twirc_state *s, const struct twirc_event *evt)
+void event_action(struct twirc_state *s, struct twirc_event *evt)
 {
 	fprintf(stdout, "* %s %s\n", evt->nick, evt->message);
 }
