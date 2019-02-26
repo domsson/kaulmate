@@ -9,8 +9,6 @@
 #include "strutils.h"
 #include "dirutils.h"
 #include "ini.h"
-#include "libircclient.h"
-#include "libirc_rfcnumeric.h"
 #include "libtwirc/src/libtwirc.h"
 
 #define NAME   "kaulmate"
@@ -30,15 +28,17 @@
 #define CONFIG_GENERAL "config.ini"
 #define CONFIG_ACCOUNT "login.ini"
 
-double last_msg;
+//double last_msg;
 
 // Currently not in use, still thinking how I want
 // to go about this exactly...
+/*
 struct irc_context
 {
 	const struct kaul_config *cfg;
 	const float msg_cap;
 };
+*/
 
 struct kaul_config
 {
@@ -50,6 +50,8 @@ struct kaul_config
 
 	char cmdchr;
 	int timezone;
+	float msg_cap;
+	double last_msg;
 };
 
 void free_cfg(struct kaul_config *cfg)
@@ -81,15 +83,19 @@ double get_time()
  * Returns 1 if enough time has passed since the last message
  * in order not to 'spam', otherwise 0.
  */
-int can_send()
+int can_send(struct twirc_state *s)
 {
-	return (get_time() - last_msg) >= MSG_INTERVAL;
+	struct kaul_config *cfg = twirc_get_context(s);
+	//return (get_time() - last_msg) >= MSG_INTERVAL;
+	return (get_time() - cfg->last_msg) >= MSG_INTERVAL;
 }
 
 int send_msg(struct twirc_state *s, const char *msg)
 {
+	struct kaul_config *cfg = twirc_get_context(s);
 	double now = get_time();
-	double delta = now - last_msg;
+	//double delta = now - last_msg;
+	double delta = now - cfg->last_msg;
 
 	if (delta < MSG_INTERVAL)
 	{
@@ -98,7 +104,8 @@ int send_msg(struct twirc_state *s, const char *msg)
 	}
 
 	twirc_cmd_privmsg(s, "#domsson", msg);
-	last_msg = now;
+	//last_msg = now;
+	cfg->last_msg = now;
 	return 0;
 }
 
@@ -152,18 +159,16 @@ void cmd_random(struct twirc_state *s)
 
 void cmd_time(struct twirc_state *s)
 {
-	/*
 	// time_t is not guaranteed to be an int so it isn't
 	// exactly safe to add to it, but it seems safe enough.
 	
-	struct kaul_config *cfg = irc_get_ctx(s);
+	struct kaul_config *cfg = twirc_get_context(s);
 	const time_t t = time(NULL) + (cfg->timezone * 60 * 60);
 	struct tm *gmt = gmtime(&t);
 
 	char timestr[32];
 	snprintf(timestr, 32, "Current time: %02d:%02d (GMT+%d)", gmt->tm_hour, gmt->tm_min, cfg->timezone);
 	send_msg(s, timestr);
-	*/
 }
 
 void cmd_youtube(struct twirc_state *s)
@@ -251,27 +256,20 @@ void event_action(struct twirc_state *s, struct twirc_event *evt)
 /*
  * Close session, disconnect, free objects, etc
  */
-void cleanup(irc_session_t *s)
+void cleanup(struct twirc_state *s)
 {
 	if (!s)
 	{
 		return;
 	}
 
-	/*
-	struct kaul_config *cfg = irc_get_ctx(s);
+	struct kaul_config *cfg = twirc_get_context(s);
 	free_cfg(cfg);
-
-	if (irc_is_connected(s))
-	{	
-		irc_cmd_quit(s, NULL);
-	}
 
 	if (s)
 	{
-		irc_destroy_session(s);
+		twirc_kill(s);
 	}
-	*/
 }
 
 int cfg_handler(void *config, const char *section, const char *name, const char *value)
@@ -384,7 +382,7 @@ int main(int argc, char *argv[])
 	}
 
 	// TODO incorporate that into the cfg or the ctx or whatever
-	last_msg = 0.0;
+	//last_msg = 0.0;
 
 	if (cfg.host == NULL)
 	{
@@ -418,28 +416,30 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	struct twirc_state *session = twirc_init();
+	struct twirc_state *s= twirc_init();
 
-	if (!session)
+	if (!s)
 	{
 		fprintf(stderr, "Could not initiate IRC session, aborting.\n");
 		return EXIT_FAILURE;
 	}
 
-	struct twirc_callbacks *cbs = twirc_get_callbacks(session);
+	struct twirc_callbacks *cbs = twirc_get_callbacks(s);
 	
 	cbs->welcome = event_welcome;
 	cbs->privmsg = event_privmsg;
 
-	if (twirc_connect(session, cfg.host, cfg.port, cfg.pass, cfg.nick) != 0)
+	if (twirc_connect(s, cfg.host, cfg.port, cfg.pass, cfg.nick) != 0)
 	{
 		fprintf(stderr, "Could not connect to IRC\n");
 		return EXIT_FAILURE;
 	}
 
-	twirc_loop(session, 1000);
-	twirc_kill(session);
+	twirc_set_context(s, &cfg);
+
+	twirc_loop(s, 1000);
 	free_cfg(&cfg);
+	twirc_kill(s);
 
 	fprintf(stderr, "Good bye!\n");
 	return EXIT_SUCCESS;
