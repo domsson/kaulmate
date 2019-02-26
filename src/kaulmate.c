@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
 	cbs->welcome = event_welcome;
 	cbs->privmsg = event_privmsg;
 
-	if (twirc_connect(s, cfg.host, cfg.port, cfg.pass, cfg.nick) != 0)
+	if (twirc_connect(s, cfg.host, cfg.port, cfg.nick, cfg.pass) != 0)
 	{
 		fprintf(stderr, "Could not connect to IRC\n");
 		return EXIT_FAILURE;
