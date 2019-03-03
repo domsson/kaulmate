@@ -213,7 +213,7 @@ void event_welcome(struct twirc_state *s, struct twirc_event *evt)
  */
 void event_join(struct twirc_state *s, struct twirc_event *evt)
 {
-	if (strcmp(evt->nick, "kaulmate") == 0)
+	if (strcmp(evt->origin, "kaulmate") == 0)
 	{
 		fprintf(stderr, "*** we joined %s\n", evt->channel);
 
@@ -229,7 +229,7 @@ void event_join(struct twirc_state *s, struct twirc_event *evt)
  */
 void event_part(struct twirc_state *s, struct twirc_event *evt)
 {
-	if (strcmp(evt->nick, "kaulmate") == 0)
+	if (strcmp(evt->origin, "kaulmate") == 0)
 	{
 		fprintf(stderr, "*** we left %s\n", evt->channel);
 	}
@@ -237,7 +237,7 @@ void event_part(struct twirc_state *s, struct twirc_event *evt)
 
 void event_privmsg(struct twirc_state *s, struct twirc_event *evt)
 {
-	fprintf(stdout, "%s: %s\n", evt->nick, evt->message);
+	fprintf(stdout, "%s: %s\n", evt->origin, evt->message);
 
 	if (evt->message[0] == '!')
 	{
@@ -250,7 +250,7 @@ void event_privmsg(struct twirc_state *s, struct twirc_event *evt)
  */
 void event_action(struct twirc_state *s, struct twirc_event *evt)
 {
-	fprintf(stdout, "* %s %s\n", evt->nick, evt->message);
+	fprintf(stdout, "* %s %s\n", evt->origin, evt->message);
 }
 
 /*
