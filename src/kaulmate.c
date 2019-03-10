@@ -9,7 +9,7 @@
 #include "strutils.h"
 #include "dirutils.h"
 #include "ini.h"
-#include "libtwirc/src/libtwirc.h"
+#include "libtwirc.h"
 
 #define NAME   "kaulmate"
 #define AUTHOR "domsson"
@@ -22,7 +22,6 @@
 #endif
 
 #define TOKEN_SIZE 1024
-#define COMMAND_SIZE 32
 #define MSG_INTERVAL 1.5 
 
 #define CONFIG_GENERAL "config.ini"
@@ -42,12 +41,20 @@ struct irc_context
 
 struct kaul_config
 {
+	// login
 	char *host;
 	char *port;
 	char *chan;
 	char *nick;
 	char *pass;
+	
+	// stuff
+	char *owner;
 
+	// social
+	char *youtube;
+
+	// other stuff
 	char cmdchr;
 	int timezone;
 	float msg_cap;
@@ -86,15 +93,13 @@ double get_time()
 int can_send(struct twirc_state *s)
 {
 	struct kaul_config *cfg = twirc_get_context(s);
-	//return (get_time() - last_msg) >= MSG_INTERVAL;
 	return (get_time() - cfg->last_msg) >= MSG_INTERVAL;
 }
 
-int send_msg(struct twirc_state *s, const char *msg)
+int send_msg(struct twirc_state *s, twirc_event_t *evt, const char *msg)
 {
 	struct kaul_config *cfg = twirc_get_context(s);
 	double now = get_time();
-	//double delta = now - last_msg;
 	double delta = now - cfg->last_msg;
 
 	if (delta < MSG_INTERVAL)
@@ -103,32 +108,45 @@ int send_msg(struct twirc_state *s, const char *msg)
 		return 1;
 	}
 
-	twirc_cmd_privmsg(s, "#domsson", msg);
-	//last_msg = now;
+	if (strcmp(evt->command, "WHISPER") == 0)
+	{
+		twirc_cmd_whisper(s, evt->origin, msg);
+	}
+	else
+	{
+		twirc_cmd_privmsg(s, evt->channel, msg);
+	}
 	cfg->last_msg = now;
 	return 0;
 }
 
-void cmd_bot(struct twirc_state *s)
+void cmd_bot(struct twirc_state *s, twirc_event_t *evt)
 {
 	char msg[1024];
-	snprintf(msg, 1024, "I'm kaulmate, version %o.%o build %f by %s, see %s",
+	snprintf(msg, 1024, "I'm %s, version %o.%o build %f by %s, see %s",
+			(twirc_get_login(s))->nick,
 			VERSION_MAJOR,
 			VERSION_MINOR,
 			BUILD,
 			AUTHOR,
 			URL);
-	send_msg(s, msg);
+	send_msg(s, evt, msg);
 }
 
-void cmd_random(struct twirc_state *s)
+int random_line(const char *file, char *buf, size_t len)
 {
-	FILE *fp = fopen("random", "r");
+	if (file == NULL)
+	{
+		return -1;
+	}
+
+	FILE *fp = fopen(file, "r");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "Could not open 'random' file\n");
-		return;
+		fprintf(stderr, "Could not open file: %s\n", file);
+		return -1;
 	}
+
 	unsigned lines = 0;
 	int ch = 0;
 
@@ -143,9 +161,8 @@ void cmd_random(struct twirc_state *s)
 	fseek(fp, 0, SEEK_SET);
 	
 	int line = random() % lines;
-   	char str[2048];
 
-	for (int i = 0; fgets(str, 2048, fp) != NULL; ++i)
+	for (int i = 0; fgets(buf, len, fp) != NULL; ++i)
 	{
 		if (i == line)
 		{
@@ -154,10 +171,24 @@ void cmd_random(struct twirc_state *s)
 	}
 	fclose(fp);
 
-	send_msg(s, str);
+	return 0;
 }
 
-void cmd_time(struct twirc_state *s)
+void cmd_random_color(struct twirc_state *s, twirc_event_t *evt)
+{
+	char col[64];
+	random_line("named-colors", col, 64);
+	twirc_cmd_color(s, col);
+}
+
+void cmd_random(struct twirc_state *s, twirc_event_t *evt)
+{
+   	char str[2048];
+	random_line("phrases", str, 2048);
+	send_msg(s, evt, str);
+}
+
+void cmd_time(struct twirc_state *s, twirc_event_t *evt)
 {
 	// time_t is not guaranteed to be an int so it isn't
 	// exactly safe to add to it, but it seems safe enough.
@@ -168,44 +199,105 @@ void cmd_time(struct twirc_state *s)
 
 	char timestr[32];
 	snprintf(timestr, 32, "Current time: %02d:%02d (GMT+%d)", gmt->tm_hour, gmt->tm_min, cfg->timezone);
-	send_msg(s, timestr);
+	send_msg(s, evt, timestr);
 }
 
-void cmd_youtube(struct twirc_state *s)
+void cmd_youtube(struct twirc_state *s, twirc_event_t *evt)
 {
-	// TODO obviously this will have to come out of a config file
-	const char yt[] = "https://www.youtube.com/channel/UCNYkFdQfHWKnTr6ko9XcJig";
-	send_msg(s, yt);
+	struct kaul_config *cfg = twirc_get_context(s);
+	send_msg(s, evt, cfg->youtube);
 }
 
-void handle_command(struct twirc_state *s, const char *cmd)
+void cmd_vanish(twirc_state_t *s, twirc_event_t *evt)
+{
+	twirc_cmd_timeout(s, evt->channel, evt->origin, 1, NULL);
+}
+
+void cmd_slashcock(twirc_state_t *s, twirc_event_t *evt)
+{
+	send_msg(s, evt, "Did you know that the first ever subscriber was cockeys? And did you know that the first ever subscriber was fuwawame, but the sub was actually a giftsub by SlashLife? Both on 2019-03-08. Well, you know now!");
+}
+
+void cmd_pixelogic(twirc_state_t *s, twirc_event_t *evt)
+{
+	send_msg(s, evt, "Did you know that the first big (22 users!) raid was by PixelogicDev on 2019-03-08!");
+}
+
+void cmd_sit(twirc_state_t*s, twirc_event_t *evt)
+{
+	send_msg(s, evt, "Get up! Stand up! Sitting for too long will kill you :-(");
+}
+
+void handle_command(struct twirc_state *s, twirc_event_t *evt, const char *cmd)
 {
 	if (strcmp(cmd, "!bot") == 0)
 	{
-		cmd_bot(s);
+		cmd_bot(s, evt);
 		return;
 	}
 	if (strcmp(cmd, "!time") == 0)
 	{
-		cmd_time(s);
+		cmd_time(s, evt);
 		return;
 	}
 	if (strcmp(cmd, "!youtube") == 0)
 	{
-		cmd_youtube(s);
+		cmd_youtube(s, evt);
 		return;
 	}
 	if (strcmp(cmd, "!yt") == 0)
 	{
-		cmd_youtube(s);
+		cmd_youtube(s, evt);
 		return;
 	}
-	cmd_random(s);
+	if (strcmp(cmd, "!slashcock") == 0 || strcmp(cmd, "!cocklife") == 0)
+	{
+		cmd_slashcock(s, evt);
+		return;
+	}
+	if (strcmp(cmd, "!pixelogic") == 0)
+	{
+		cmd_pixelogic(s, evt);
+		return;
+	}
+	if (strcmp(cmd, "!color") == 0)
+	{
+		struct kaul_config *cfg = twirc_get_context(s);
+		if (strcmp(evt->origin, cfg->owner) == 0)
+		{
+			cmd_random_color(s, evt);
+		}
+		return;
+	}
+	if (strcmp(cmd, "!sit") == 0)
+	{
+		cmd_sit(s, evt);
+		return;
+	}
+	if (strcmp(cmd, "!oops") == 0)
+	{
+		cmd_vanish(s, evt);
+		return;
+	}
+	if (strcmp(cmd, "!drugs") == 0)
+	{
+		send_msg(s, evt, "Say no to drugs!");
+		return;
+	}
+	if (strcmp(cmd, "!pegi") == 0)
+	{
+		send_msg(s, evt, "Itz totally family friendly, I swear! l0rn");
+		return;
+	}
+
+	cmd_random(s, evt);
 }
 
 void event_welcome(struct twirc_state *s, struct twirc_event *evt)
 {
-	twirc_cmd_join(s, "#domsson");
+	fprintf(stderr, "*** connected\n");
+	struct kaul_config *cfg = twirc_get_context(s);
+	twirc_cmd_join(s, cfg->chan);
 }
 
 /*
@@ -213,25 +305,16 @@ void event_welcome(struct twirc_state *s, struct twirc_event *evt)
  */
 void event_join(struct twirc_state *s, struct twirc_event *evt)
 {
-	if (strcmp(evt->origin, "kaulmate") == 0)
+	struct kaul_config *cfg = twirc_get_context(s);
+
+	if (strcmp(evt->origin, cfg->nick) == 0)
 	{
 		fprintf(stderr, "*** we joined %s\n", evt->channel);
 
-		if (strcmp(evt->channel, "#domsson") == 0)
+		if (strcmp(evt->channel, cfg->chan) == 0)
 		{
-			twirc_cmd_privmsg(s, "#domsson", "jobruce is the best!");
+			twirc_cmd_privmsg(s, cfg->chan, "jobruce is the best!");
 		}
-	}
-}
-
-/*
- * Someone left the channel - it could be us!
- */
-void event_part(struct twirc_state *s, struct twirc_event *evt)
-{
-	if (strcmp(evt->origin, "kaulmate") == 0)
-	{
-		fprintf(stderr, "*** we left %s\n", evt->channel);
 	}
 }
 
@@ -241,7 +324,17 @@ void event_privmsg(struct twirc_state *s, struct twirc_event *evt)
 
 	if (evt->message[0] == '!')
 	{
-		handle_command(s, evt->message);
+		handle_command(s, evt, evt->message);
+	}
+}
+
+void event_whisper(struct twirc_state *s, struct twirc_event *evt)
+{
+	fprintf(stdout, "(WHISPER) %s: %s\n", evt->origin, evt->message);
+
+	if (evt->message[0] == '!')
+	{
+		handle_command(s, evt, evt->message);
 	}
 }
 
@@ -306,9 +399,21 @@ int cfg_handler(void *config, const char *section, const char *name, const char 
 		return 1;
 	}
 	
+	if (str_equals(name, "owner") || str_equals(name, "owner"))
+	{
+		cfg->owner = str_quoted(value) ? str_unquote(value) : strdup(value);
+		return 1;
+	}
+
 	if (str_equals(name, "timezone"))
 	{
 		cfg->timezone = atoi(value);
+		return 1;
+	}
+
+	if (str_equals(name, "youtube"))
+	{
+		cfg->youtube = str_quoted(value) ? str_unquote(value) : strdup(value);
 		return 1;
 	}
 
@@ -416,7 +521,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	struct twirc_state *s= twirc_init();
+	struct twirc_state *s = twirc_init();
 
 	if (!s)
 	{
@@ -428,6 +533,8 @@ int main(int argc, char *argv[])
 	
 	cbs->welcome = event_welcome;
 	cbs->privmsg = event_privmsg;
+	cbs->whisper = event_whisper;
+	cbs->join    = event_join;
 
 	if (twirc_connect(s, cfg.host, cfg.port, cfg.nick, cfg.pass) != 0)
 	{
@@ -437,7 +544,7 @@ int main(int argc, char *argv[])
 
 	twirc_set_context(s, &cfg);
 
-	twirc_loop(s, 1000);
+	twirc_loop(s);
 	free_cfg(&cfg);
 	twirc_kill(s);
 
