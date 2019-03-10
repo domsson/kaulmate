@@ -1,6 +1,6 @@
 # kaulmate
 
-A **very** simple IRC bot written in C. Currently developed on an for Linux. It is supposed to be used with Twitch, though I assume it would work on any IRC server, really. This is mainly a fun project to practice my C skills. I don't plan to add many features.
+A **very** simple Twitch IRC bot written in C. Currently developed on an for Linux. This is mainly a fun project to practice my C skills. I don't plan to add many features.
 
 ## Features
 
@@ -8,7 +8,7 @@ Currently, all the bot has to offer are some hard-coded commands (for example `!
 
 ## Dependencies
 
-- [`libircclient`](https://github.com/shaoner/libircclient) (available in the Debian packages as `libircclient-dev`)
+- [`libtwirc`](https://github.com/domsson/libtwirc)
 - [`inih`](https://github.com/benhoyt/inih) (available in the Debian packages as `libinih-dev`)
 
 ## Build
