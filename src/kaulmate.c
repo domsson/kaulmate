@@ -273,6 +273,10 @@ void handle_command(struct twirc_state *s, twirc_event_t *evt, const char *cmd)
 	if (strcmp(cmd, "!color") == 0)
 	{
 		struct kaul_config *cfg = twirc_get_context(s);
+		if (cfg->owner == NULL)
+		{
+			return;
+		}
 		if (strcmp(evt->origin, cfg->owner) == 0)
 		{
 			cmd_random_color(s, evt);
@@ -323,7 +327,7 @@ void event_join(struct twirc_state *s, struct twirc_event *evt)
 
 		if (strcmp(evt->channel, cfg->chan) == 0)
 		{
-			twirc_cmd_privmsg(s, cfg->chan, "jobruce is the best!");
+			//twirc_cmd_privmsg(s, cfg->chan, "jobruce is the best!");
 		}
 	}
 }
