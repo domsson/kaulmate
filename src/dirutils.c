@@ -34,8 +34,14 @@ int config_dir(char *dir, size_t len, const char *basename)
 	// Use "$HOME/.config", as that's what's mostly in use these days
 	n = snprintf(dir, len, "%s/%s/%s", getenv("HOME"), ".config", basename ? basename : "");
 
+	// Check if snprintf errord on us
+	if (n < 0)
+	{
+		return 0;
+	}
+
 	// The config path did not fit into dir - now it is truncated	
-	if (n >= len)
+	if ((size_t) n >= len)
 	{
 		return 0;
 	}
@@ -101,7 +107,7 @@ int dir_concat(char *dir, size_t len, const char *basename)
 	}
 
 	// Run through basename and add each char to dir
-	for (int i = 0; i < base_len; ++i)
+	for (size_t i = 0; i < base_len; ++i)
 	{
 		dir[dir_len++] = basename[i];
 	}

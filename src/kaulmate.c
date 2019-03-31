@@ -223,9 +223,14 @@ void cmd_pixelogic(twirc_state_t *s, twirc_event_t *evt)
 	send_msg(s, evt, "Did you know that the first big (22 users!) raid was by PixelogicDev on 2019-03-08!");
 }
 
-void cmd_sit(twirc_state_t*s, twirc_event_t *evt)
+void cmd_sit(twirc_state_t *s, twirc_event_t *evt)
 {
 	send_msg(s, evt, "Get up! Stand up! Sitting for too long will kill you :-(");
+}
+
+void cmd_victor(twirc_state_t *s, twirc_event_t *evt)
+{
+	send_msg(s, evt, "Did you know that on 2019-03-31, domsson got his 100th follower? Yes, that's right! It was victornizeyimana, yay!");
 }
 
 void handle_command(struct twirc_state *s, twirc_event_t *evt, const char *cmd)
@@ -253,6 +258,11 @@ void handle_command(struct twirc_state *s, twirc_event_t *evt, const char *cmd)
 	if (strcmp(cmd, "!slashcock") == 0 || strcmp(cmd, "!cocklife") == 0)
 	{
 		cmd_slashcock(s, evt);
+		return;
+	}
+	if (strcmp(cmd, "!victor") == 0)
+	{
+		cmd_victor(s, evt);
 		return;
 	}
 	if (strcmp(cmd, "!pixelogic") == 0)
