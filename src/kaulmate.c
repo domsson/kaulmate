@@ -303,6 +303,11 @@ void handle_command(struct twirc_state *s, twirc_event_t *evt, const char *cmd)
 		send_msg(s, evt, "Itz totally family friendly, I swear! l0rn");
 		return;
 	}
+	if (strcmp(cmd, "!music") == 0)
+	{
+		send_msg(s, evt, "Check out http://www.planettobor.com/music :-)");
+		return;
+	}
 
 	cmd_random(s, evt);
 }
